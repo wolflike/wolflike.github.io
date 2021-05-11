@@ -123,17 +123,17 @@
   </li>
         <li class="menu-item menu-item-tags">
 
-    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">2</span></a>
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">3</span></a>
 
   </li>
         <li class="menu-item menu-item-categories">
 
-    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">1</span></a>
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">2</span></a>
 
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">7</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">8</span></a>
 
   </li>
   </ul>
@@ -177,7 +177,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2021/05/11/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">未命名</a>
+            <a href="/2021/05/11/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">数据结构与算法总结</a>
         </h2>
 
         <div class="post-meta">
@@ -188,7 +188,16 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2021-05-11 16:10:11 / 修改时间：16:08:55" itemprop="dateCreated datePublished" datetime="2021-05-11T16:10:11+08:00">2021-05-11</time>
+              <time title="创建时间：2021-05-11 16:12:04 / 修改时间：16:14:17" itemprop="dateCreated datePublished" datetime="2021-05-11T16:12:04+08:00">2021-05-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">数据结构与算法</span></a>
+                </span>
             </span>
 
           
@@ -202,8 +211,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>数据结构与算法总结</p>
-<ul>
+          <ul>
 <li>拓扑排序<ul>
 <li> 求出所有节点的入度outEdges（数组）</li>
 <li> 求出所有节点的邻接链表vertexAdjs（链表数组）</li>
@@ -213,74 +221,71 @@
 </li>
 </ul>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TopologicalSort</span> </span>&#123;</span><br><span class="line">    <span class="comment">//以邻接链表为主</span></span><br><span class="line">    <span class="keyword">int</span> n;</span><br><span class="line">    List&lt;Integer&gt;[] adj;</span><br><span class="line">    <span class="keyword">int</span>[] inDegree;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">init</span><span class="params">()</span></span>&#123;</span><br><span class="line">        n = <span class="number">10005</span>;</span><br><span class="line">        adj = <span class="keyword">new</span> List[n];</span><br><span class="line"></span><br><span class="line">        inDegree = <span class="keyword">new</span> <span class="keyword">int</span>[n];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> List&lt;Integer&gt; <span class="title">topologicalSort</span><span class="params">(List&lt;Integer&gt;[] adj,<span class="keyword">int</span>[] inDegree)</span></span>&#123;</span><br><span class="line">        Queue&lt;Integer&gt; queue = <span class="keyword">new</span> LinkedList&lt;&gt;();</span><br><span class="line">        List&lt;Integer&gt; res = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>;i&lt;inDegree.length;i++)&#123;</span><br><span class="line">            <span class="keyword">if</span>(inDegree[i]==<span class="number">0</span>)queue.add(i);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">while</span>(!queue.isEmpty())&#123;</span><br><span class="line">            Integer poll = queue.poll();</span><br><span class="line">            res.add(poll);</span><br><span class="line">            <span class="keyword">for</span>(Integer out:adj[poll])&#123;</span><br><span class="line">                <span class="keyword">if</span>(--inDegree[out]==<span class="number">0</span>)&#123;</span><br><span class="line">                    queue.add(out);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span>(res.size()==inDegree.length)<span class="keyword">return</span> res;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/05/11/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95%E6%80%BB%E7%BB%93/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
 
-<ul>
-<li>并查集<ul>
-<li> 初始化所有节点的parent（初始值是自己）</li>
-<li> 根据条件求两个节点的并集（在求并集的过程中，递归拆解自己的parent，指向最终的parent）</li>
-<li> 判断是否两个节点是否有相同的parent</li>
-</ul>
-</li>
-</ul>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">UnionFindSet</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> n = <span class="number">1000005</span>;</span><br><span class="line">    <span class="keyword">int</span> [] parent = <span class="keyword">new</span> <span class="keyword">int</span>[n];</span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">init</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>;i&lt;n;i++)&#123;</span><br><span class="line">            parent[i] = i;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">find</span><span class="params">(<span class="keyword">int</span> v,<span class="keyword">int</span>[] parent)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(v!=parent[v])parent[v] = find(parent[v],parent);</span><br><span class="line">        <span class="keyword">return</span> parent[v];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">union</span><span class="params">(<span class="keyword">int</span> v,<span class="keyword">int</span> u,<span class="keyword">int</span>[] parent)</span></span>&#123;</span><br><span class="line">        parent[find(v,parent)] = find(u,parent);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">isEqual</span><span class="params">(<span class="keyword">int</span> v,<span class="keyword">int</span> u,<span class="keyword">int</span>[] parent)</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> parent[find(v,parent)]==parent[find(u,parent)];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
 
-<ul>
-<li>线段树<ul>
-<li> 为数组取4n长度的预备数组</li>
-<li> 递归（二分）求出4n数组维护的值</li>
-<li> 递归求出给定范围所求的值</li>
-</ul>
-</li>
-</ul>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SegmentTree</span></span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> nums[];</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> seg[];</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> n;</span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">init</span><span class="params">(<span class="keyword">int</span> nums[])</span></span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.nums = nums;</span><br><span class="line">        n = nums.length;</span><br><span class="line">        seg = <span class="keyword">new</span> <span class="keyword">int</span>[<span class="number">4</span>*n];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">setSeg</span><span class="params">(<span class="keyword">int</span> index,<span class="keyword">int</span> l,<span class="keyword">int</span> r)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(l==r)&#123;</span><br><span class="line">            seg[index] = nums[l];</span><br><span class="line">            <span class="keyword">return</span> seg[index];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">int</span> mid = (l+r)/<span class="number">2</span>;</span><br><span class="line">        <span class="keyword">int</span> left = segSeg(seg,index*<span class="number">2</span>,l,mid);</span><br><span class="line">        <span class="keyword">int</span> right = segSeg(seg,index*<span class="number">2</span>+<span class="number">1</span>,mid+<span class="number">1</span>,r);</span><br><span class="line">        <span class="keyword">return</span> Math.max(left,right);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//a,b不变，l,r在变</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">find</span><span class="params">(<span class="keyword">int</span> a,<span class="keyword">int</span> b,<span class="keyword">int</span> l,<span class="keyword">int</span> r,<span class="keyword">int</span> index)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(a&gt;=r||b&lt;=l)<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span>(a&lt;=l&amp;&amp;r&lt;=b)<span class="keyword">return</span> seg[index];</span><br><span class="line">        <span class="keyword">else</span>&#123;</span><br><span class="line">            <span class="keyword">int</span> mid = (l+r)/<span class="number">2</span>;</span><br><span class="line">            <span class="keyword">return</span> Math.max(find(a,b,l,mid,index*<span class="number">2</span>),find(a,b,mid+<span class="number">1</span>,r,index*<span class="number">2</span>+<span class="number">1</span>));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://wolflike.github.io/2021/05/11/test1/">
 
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/%E5%9B%BE%E7%81%B5.jpg">
+      <meta itemprop="name" content="鸿曦">
+      <meta itemprop="description" content="没有什么知识是学不会的">
+    </span>
 
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wolflike">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/05/11/test1/" class="post-title-link" itemprop="url">test1</a>
+        </h2>
 
-<ul>
-<li><p>dp应用</p>
-<ul>
-<li>一维dp<ul>
-<li> 一般动规的规律是当前的状态是可以由前面的状态得来的，所以可以看到一般动规都是for循环实现的，像当前节点可以由四周的状态得来的状态一般不能使用动规实现，使用深度优先或者广度优先方法可能更好，就是要注意要设置访问数组。</li>
-</ul>
-</li>
-</ul>
- <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//一维动规第一种方式</span></span><br><span class="line"><span class="comment">//当前状态必须选择当前节点</span></span><br><span class="line"><span class="comment">//递推式可能如下</span></span><br><span class="line">dp[i] = dp[i-x]+nums[i];</span><br><span class="line">max = Math.max(dp[i],max);</span><br><span class="line"><span class="comment">//可以看到这个式子关键的决策不在dp而在max变量，因为dp保存的状态不是当前最优状态，而是包含了当前节点的状态，因此必须使用max来更新全局最优最优状态</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//一维动规第二种方式</span></span><br><span class="line"><span class="comment">//当前状态可以做两种选择：选取当前节点和不选取当前节点</span></span><br><span class="line">dp[i] = Math.max(dp[i-<span class="number">1</span>],dp[i-x]+nums[i]);</span><br><span class="line"><span class="comment">//可以看到当前如果不选举当前节点的话，他直接依靠上一个节点的状态（上一个节点也可以这样做），如果选举了，他可能就是根据条件然后加上当前节点的值求得状态，这样的状态结果一般全局的最优状态，结果的返回值一般也是dp[n-1]</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//一维动规第三种方式</span></span><br><span class="line"><span class="comment">//可能是由二维转化而来，节约不了时间，但是可以节约空间</span></span><br><span class="line"><span class="comment">//递推式可能如下：</span></span><br><span class="line">dp[j] = Math.max(dp[j],dp[j-<span class="number">1</span>]+nums[i]);</span><br><span class="line"><span class="comment">//可以看到我这里为什么要写dp[j]而不是写dp[i]，一般二维的是先i后j，很显然我把外围for循环省略了，dp[i][j]和dp[i-1][j]代表在第i个状态和第i-1个状态对j做决策。我们可以还原一下上面的式子：</span></span><br><span class="line">dp[i][j] = Math.max(dp[i-<span class="number">1</span>][j],dp[i-<span class="number">1</span>][j-<span class="number">1</span>]+nums[i]);</span><br><span class="line"><span class="comment">//可以发现当前dp[i][j]只用到了上一个状态的j和j-1，那规律就出来了呀，这里的i绝对可以直接省略，因为每次i状态把i-1状态覆盖就好了，他只是用了j-1，所以不会影响，当然需要注意j的遍历顺序（这里其实我解释的不是很清楚，需要自己多做题领悟）</span></span><br></pre></td></tr></table></figure>
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
 
-<ul>
-<li> 二维dp</li>
-</ul>
- <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//二维要讲的东西不多，无非就是在一维基础上增加状态</span></span><br><span class="line"><span class="comment">//二维第一种方式（和一维方式是一样的思想）</span></span><br><span class="line"><span class="comment">//在矩阵中做动规，一般两种方式：左上--&gt;右下和右下--&gt;左上</span></span><br><span class="line"><span class="comment">//只有这样才符合当前状态由上一个状态得出，像从当前节点出来，前后左右都可以获取状态是推不出来的</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//第二种方式</span></span><br><span class="line"><span class="comment">//给你一个数组，让你达到某种要求，如果这个要求是要参与dp的话，那就是要二维了，不需要就退化为一维，比如经典的背包问题，为啥他需要二维（当然他的空间也可以压缩为一维），就是因为他的target是参与了dp的，什么意思呢？举个例子，给你一个数组，最终问你这个数组最终求得的极值那就是一维，如果问你这个数组达到啥条件，才求得的极值，那就是二维。</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//第三种方式</span></span><br><span class="line"><span class="comment">//就是给你两个数组，一般就是二维了</span></span><br></pre></td></tr></table></figure>
+              <time title="创建时间：2021-05-11 16:12:04" itemprop="dateCreated datePublished" datetime="2021-05-11T16:12:04+08:00">2021-05-11</time>
+            </span>
 
-<ul>
-<li> 状压dp</li>
-</ul>
- <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//给定一个数组（这个数组一般不会很大，长度最多20）</span></span><br><span class="line"><span class="comment">//当前的状态并不是简单的有前一个状态获取的</span></span><br><span class="line"><span class="comment">//而是像四周获取状态的</span></span><br><span class="line"><span class="comment">//比如当前状态选举当前节点，剩下的节点是上一个状态（剩下的节点并不都是前面的节点）</span></span><br><span class="line"><span class="comment">//式子可能如下：</span></span><br><span class="line"><span class="comment">//长度为n的数组nums</span></span><br><span class="line"><span class="comment">//对于i,i = 0;i&lt;1&lt;&lt;n;i++;</span></span><br><span class="line"><span class="comment">//对于k，k=i;k!=0;k=(k-1)^i;</span></span><br><span class="line"><span class="comment">//对于sum，当前状态获取的和</span></span><br><span class="line"><span class="comment">//dp[i][j] = Math.max(dp[k][j-1]+sum[i-k],dp[i][j]);</span></span><br></pre></td></tr></table></figure></li>
-<li><p>单调栈</p>
-<ul>
-<li> 单调栈思想简单，但是一般做题不太容易想到</li>
-<li> 但是一定要记住，当前想要比较的东西一定是和栈顶元素比较</li>
-<li> 就算栈顶元素出栈后，栈顶第二元素就要印象后面的迭代的元素</li>
-<li> 思路：单调递减栈，遇到比栈顶小的元素，压栈。遇到比栈顶元素大的元素，栈顶出栈，好好想一想这时候可以做什么决策，当然，出栈后第二栈顶元素也比当前元素小，还可以出栈，所以看题目意思，是出一次栈做决策，还是出到不能出为止再做决策。</li>
-<li> 举个例子：求当前高度前面有多少高度可以看到，很明显此时如果是单调递减就可以求出</li>
-<li> 做题，不好想到这种方法，只好深深体会栈顶出栈，如何做决策，为什么做决策</li>
-</ul>
-</li>
-<li><p>二分法</p>
-<ul>
-<li> 二分法的思想很简单，但是好多题目用二分法做很容易做错，就是因为边界值不好处理</li>
-<li> 关键在于left、right的区间，以及判断条件</li>
-</ul>
- <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//寻找第一个大于等于X</span></span><br><span class="line"><span class="comment">//关键退出条件是l==r</span></span><br><span class="line"><span class="comment">//注意当mid位置大于等于x时，r直接赋值为mid，因为当前的mid不一定时最佳位置，当然如果是最佳位置，退出时l==r，也可以获取第一个位置大于等于x</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">findFirstGreaterThanOrEqualX</span><span class="params">(<span class="keyword">int</span> nums[],<span class="keyword">int</span> x)</span></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> l = <span class="number">0</span>,r = nums.length-<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">while</span>(l&lt;r)&#123;</span><br><span class="line">        <span class="keyword">int</span> mid = l+(l-r)/<span class="number">2</span>;</span><br><span class="line">        <span class="keyword">if</span>(nums[mid]&gt;=x)r = mid;</span><br><span class="line">        <span class="keyword">else</span> l = mid + <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> l;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//寻找第一个大于X</span></span><br><span class="line"><span class="comment">//关键退出条件是l==r</span></span><br><span class="line"><span class="comment">//注意当mid位置大于x时，r直接赋值为mid，因为当前的mid不一定时最佳位置，当然如果是最佳位置，退出时l==r，也可以获取第一个位置大于x</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">findFirstGreaterThanX</span><span class="params">(<span class="keyword">int</span> nums[],<span class="keyword">int</span> x)</span></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> l = <span class="number">0</span>,r = nums.length-<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">while</span>(l&lt;r)&#123;</span><br><span class="line">        <span class="keyword">int</span> mid = l+(l-r)/<span class="number">2</span>;</span><br><span class="line">        <span class="keyword">if</span>(nums[mid]&gt;x)r = mid;</span><br><span class="line">        <span class="keyword">else</span> l = mid + <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//寻找第一个等于x</span></span><br><span class="line"><span class="comment">//看到与第一个的区别了吧</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">findFirstEqualX</span><span class="params">(<span class="keyword">int</span> nums,<span class="keyword">int</span> x)</span></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> l = <span class="number">0</span>,r = nums.length-<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">while</span>(l&lt;r)&#123;</span><br><span class="line">        <span class="keyword">int</span> mid = l+(l-r)/<span class="number">2</span>;</span><br><span class="line">        <span class="keyword">if</span>(nums[mid]&gt;=x)r = mid;</span><br><span class="line">        <span class="keyword">else</span> l = mid + <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(l&lt;nums.length&amp;&amp;nums[l]==x)<span class="keyword">return</span> l;</span><br><span class="line">    <span class="keyword">return</span> -<span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//反思：需要注意为什么出现了死循环</span></span><br><span class="line"><span class="comment">//其实本质在于取中位数，可以看到上面取得时左边极值，中位数取的mid是下中位数，简单来说[0,3]中位数取的是1，如果在求右边极值时，你取上中位数就不会出现死循环，也就是在[0,3]取2。为什么会这样呢，本质就是有r=mid或l=mid，导致r或l一直更新不了，这就导致死循环。这样一讲就明白了，如果是令r=mid，取下中位数，令l=mid，取上中位数，问题解决。（我可能没解释清楚，但是精髓就在于此，可以自己运行程序感受一下）</span></span><br></pre></td></tr></table></figure></li>
-<li><p>滑动窗口</p>
-<ul>
-<li> 滑动窗口思想很简单，但是处理起来很麻烦，很多麻烦的东西在于区间i，j两个变量</li>
-<li> 这里我看到leetcode有道题的题解提到左闭右开，让我醍醐灌顶。（做滑动窗口第一件事就要确定i和j的初始值，还要确定左右区间是闭还是开）</li>
-</ul>
- <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">func</span><span class="params">(<span class="keyword">int</span> nums[])</span></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i = <span class="number">0</span>,j = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">int</span> n = nums.length;</span><br><span class="line">    <span class="keyword">while</span>(j&lt;n)&#123;</span><br><span class="line">        ...;<span class="comment">//一般这里就是改变窗口[i,j)维护的值</span></span><br><span class="line">        j++;</span><br><span class="line">        <span class="keyword">while</span>(...)&#123;<span class="comment">//当窗口不能变大的时候，对[i,j)做决策</span></span><br><span class="line">            ...;</span><br><span class="line">            makeDecision();</span><br><span class="line">            i++;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> getDecision();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//这里提供一些思路：</span></span><br><span class="line"><span class="comment">//第一种：让j每次都去尝试j+1的位置，不满足，让i++，如此循环</span></span><br><span class="line"><span class="comment">//第二种：让j去尝试j+1的位置，不满足，让i一直i++，直到j满足j+1的位置</span></span><br></pre></td></tr></table></figure>
+          
 
-</li>
-</ul>
+        </div>
+      </header>
 
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          
       
     </div>
 
@@ -835,20 +840,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-count">8</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-count">2</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-count">3</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
