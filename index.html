@@ -163,7 +163,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://wolflike.github.io/2021/05/12/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/">
+    <link itemprop="mainEntityOfPage" href="http://wolflike.github.io/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/%E5%9B%BE%E7%81%B5.jpg">
@@ -177,7 +177,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2021/05/12/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/" class="post-title-link" itemprop="url">synchronized关键字</a>
+            <a href="/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">ReentrantLock源码分析</a>
         </h2>
 
         <div class="post-meta">
@@ -186,83 +186,8 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2021-05-12 23:08:01 / 修改时间：23:06:40" itemprop="dateCreated datePublished" datetime="2021-05-12T23:08:01+08:00">2021-05-12</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">并发编程</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="1-synchronized是什么"><a href="#1-synchronized是什么" class="headerlink" title="1.synchronized是什么"></a>1.synchronized是什么</h3><p>​    synchronized关键字是sun公司为了解决线程同步问题而开发出来的。当线程来访问synchronized所包括的代码块时，要隐式获取锁，而后来的线程需要被阻塞。在jdk1.6之前，synchronized一直是以重量锁出现。所谓的重量锁是不管线程间对共享区是交替访问还是竞争访问，线程都是首先获取锁。而获取锁的行为就是调用操作系统函数的过程，在高并发的情况下，频繁调用操作系统函数，严重损耗性能。所以在<em>Doug Lea</em>大师写完优秀的并发编程包后，sun公司优化了synchronized关键字。在jdk1.6之后，synchronized有了无锁、偏向锁、轻量锁和重量锁的概念。</p>
-<h3 id="2-为什么要引入锁的多个状态"><a href="#2-为什么要引入锁的多个状态" class="headerlink" title="2.为什么要引入锁的多个状态"></a>2.为什么要引入锁的多个状态</h3><p>​    首次访问synchronized块的线程首先必须获取锁，然后才能执行synchronized块，而获取锁这个过程需要调用操作系统函数，这会导致cpu由用户态转变到内核态，而这个转变过程是很耗时间的。因此，可知获取synchronized锁的代价高。其次如果存在线程1还在访问synchronized块，而线程2此时也来访问synchronized块，这会导致线程之间存在竞争情况，这时synchronized会把线程2阻塞，而阻塞过程也是一个系统调用过程，这又会消耗不少时间。当然如果在高并发应用的情境中，时刻发生着线程之间的竞争，那么把synchronized直接设计为重量锁是没问题的。但是大部分情况下，线程之间是交替访问共享资源的。那么由此就可以产生一种设计思想：尽量不让程序调用系统函数。所以sun公司就设计了synchronized的无锁、偏向锁、轻量锁、重量锁使程序尽量不调用系统函数。</p>
-<h3 id="3-怎么实现synchronized关键字"><a href="#3-怎么实现synchronized关键字" class="headerlink" title="3.怎么实现synchronized关键字"></a>3.怎么实现synchronized关键字</h3><p>​    首先要明确synchronized使作用在对象上的，所以线程要获取所谓的锁就要向synchronized所代表的那个对象拿。我们都知道任何一个对象都可以当作锁，那我们是如何拿到“锁”的呢？其实对象都有三部分数据：对象头、对象属性以及对象补齐（一个对象所占的大小必须是8字节的倍数，所以有时候需要补充字节）。对象头就是用来实现synchronized锁的。</p>
-<p><img src="images/ObjectHeader.jpg" alt="对象头"></p>
-<p>上图是对象头的结构，随着锁的状态的变化，对象头的内容也会发生变化。最开始的状态是无锁状态标志位为01，但此时无锁状态是有两种状态：无锁可偏向和无锁不可偏向。也即是说还有一位偏向标志位。也就是说，初始状态有两种情况，可以为无锁可偏向或者无锁不可偏向。如果开启虚拟机参数-XX:+UseBiasedLocking=true,那默认是无锁可偏向的也就是101，如果关闭参数不启用偏向锁那就是001，然后调用对象的hashcode函数后，前25位会保存哈希码，那么状态就会变为001，如果调用了hashcode函数，那么锁状态是不可能到可偏向锁状态的，而是直接升为轻量锁000的。如果没有调用hashcode函数且开启了偏向锁参数，区访问synchronized块时，会到偏向锁状态101的，如果没有开启，那直接升级为轻量锁000。到了轻量锁的时候，如果存在竞争情况，那么就到重量锁010状态。设计四个状态的锁，第一个无锁状态是没有调用系统函数的，当然线程也没有访问synchronized块。第二可偏向锁状态作用就是用前25位来保存当前访问synchronized块的线程id，显然也没有调用系统函数。当线程访问完synchronized块后，没有其他线程访问，而其再次访问了，又可以直接进入synchronized块。当当前线程访问完后，有其他线程正好也来访问了，那就需要升级为轻量锁了，这就是所谓的交替访问（偏向锁撤销和升级轻量锁是需要消耗时间的，所以如果线程竞争情况激烈时，可以不用考虑偏向锁这一状态了，直接禁用掉）。偏向锁的撤销相对于调用系统函数来说消耗的时间就太少了，毕竟是在用户态下完成的。当然轻量锁形成后，线程执行完后要解锁的时候会把轻量锁000—-&gt;001,变成不可偏向无锁状态，这很合理。当其他线程需要访问的时候，需要用CAS指令判断是否是不可偏向无锁状态，如果是就把锁状态保存在当前线程的栈中，然后前25位指向栈中的地址，重新把状态置为000，如果发生竞争，那就直接升级重量锁010了，重量锁就要用到系统函数了，当线程2到达synchronized块时，如果线程1还没走，那么状态直接设为重量锁010，然后把调用系统函数阻塞线程2.等线程1走了之后，线程2重新锁上，它的状态也是重量级别的，当线程2走了之后，释放锁的时候，又会把状态置为001不可偏向锁，也即是说下一个线程访问的时候，又可以是轻量锁了。</p>
-<p>总结：无锁不需做任何事；偏向锁只需要判断状态和线程id号就可以了。当有别的线程访问synchronized块的时候，就需要撤销偏向锁这一状态了，也就是说mark word中再也不存在偏向锁的状态了。轻量锁加锁的时候只需要CAS修改mark word中前25位为指向栈中的指针，状态为改为000，解锁的时候把前25位置0，状态位改回001无锁不可偏向状态（但是永远不可能回到偏向锁了）。重量锁加锁的时候，把前25位置为指向互斥锁的指针，状态为改为010，解锁的时候，前25位置为0，状态改为001。</p>
-<p>总的来说synchronized的改进就是线程在加锁的时候会判断synchronized块是否有线程访问，如果有，调用系统函数阻塞之，如果没有，直接用CAS指令来改一下mark word就可以了（CAS是cpu指令，不耗时间），但是没线程访问的时候，锁的状态还是无锁状态的。只是在上述基础上，加了偏向锁，也即是说，如果synchronized块始终只有一个线程访问的话，那就没必要老是用CAS指令来修改mark word，而是直接标记这个线程就可以了，下次来直接访问。当然偏向锁一旦撤销那是不可逆的。想想也很合理，如果偏向锁撤销了，说明有多个线程访问synchronized块，那偏向标志位就改为0了，因为当前线程不知道后面访问synchronized块的线程还是不是自己，所以不能改为1了，何况偏向锁的撤销也是挺费性能的，不能老是撤销偏向锁。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://wolflike.github.io/2021/05/12/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/%E5%9B%BE%E7%81%B5.jpg">
-      <meta itemprop="name" content="鸿曦">
-      <meta itemprop="description" content="没有什么知识是学不会的">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="wolflike">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/05/12/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">ReentrantLock源码分析</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2021-05-12 23:07:55 / 修改时间：23:07:50" itemprop="dateCreated datePublished" datetime="2021-05-12T23:07:55+08:00">2021-05-12</time>
+              <time title="创建时间：2021-05-13 12:25:35" itemprop="dateCreated datePublished" datetime="2021-05-13T12:25:35+08:00">2021-05-13</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -303,7 +228,7 @@
 <h4 id="ReentrantLock源码分析之上锁过程"><a href="#ReentrantLock源码分析之上锁过程" class="headerlink" title="ReentrantLock源码分析之上锁过程"></a>ReentrantLock源码分析之上锁过程</h4><h4 id="AQS（AbstractQueuedSynchronizer）类的设计主要代码（具体参考源码）"><a href="#AQS（AbstractQueuedSynchronizer）类的设计主要代码（具体参考源码）" class="headerlink" title="AQS（AbstractQueuedSynchronizer）类的设计主要代码（具体参考源码）"></a>AQS（AbstractQueuedSynchronizer）类的设计主要代码（具体参考源码）</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">transient</span> <span class="keyword">volatile</span> Node head; <span class="comment">//队首</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">transient</span> <span class="keyword">volatile</span> Node tail;<span class="comment">//尾</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">int</span> state;<span class="comment">//锁状态，加锁成功则为1，重入+1 解锁则为0</span></span><br></pre></td></tr></table></figure>
 
 <p>AQS当中的队列示意图 :</p>
-<p><img src="images/SynchronizedQueue.png" alt="同步队列"></p>
+<p><img src="/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/SynchronizedQueue.png" alt="同步队列"></p>
 <h4 id="Node类的设计"><a href="#Node类的设计" class="headerlink" title="Node类的设计"></a>Node类的设计</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Node</span></span>&#123;</span><br><span class="line">    <span class="keyword">volatile</span> Node prev;</span><br><span class="line">    <span class="keyword">volatile</span> Node next;</span><br><span class="line">    <span class="keyword">volatile</span> Thread thread;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <h4 id="上锁过程重点"><a href="#上锁过程重点" class="headerlink" title="上锁过程重点"></a>上锁过程重点</h4><p>锁对象：其实就是ReentrantLock的实例对象，下文应用代码第一行中的lock对象就是所谓的锁<br>自由状态：自由状态表示锁对象没有被别的线程持有，计数器为0<br>计数器：再lock对象中有一个字段state用来记录上锁次数，比如lock对象是自由状态则state为0，如果大于零则表示被线程持有了，当然也有重入那么state则&gt;1<br>waitStatus：仅仅是一个状态而已；ws是一个过渡状态，在不同方法里面判断ws的状态做不同的处理，所以ws=0有其存在的必要性<br>tail：队列的队尾 head：队列的对首 ts：第二个给lock加锁的线程 tf：第一个给lock加锁的线程 tc：当前给线程加锁的线程<br>tl：最后一个加锁的线程 tn：随便某个线程<br>当然这些线程有可能重复，比如第一次加锁的时候tf=tc=tl=tn<br>节点：就是上面的Node类的对象，里面封装了线程，所以某种意义上node就等于一个线程</p>
@@ -312,7 +237,7 @@
 <h4 id="非公平锁的looc方法"><a href="#非公平锁的looc方法" class="headerlink" title="非公平锁的looc方法"></a>非公平锁的looc方法</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">final</span> <span class="keyword">void</span> <span class="title">lock</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (compareAndSetState(<span class="number">0</span>, <span class="number">1</span>))</span><br><span class="line">		setExclusiveOwnerThread(Thread.currentThread());</span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		 acquire(<span class="number">1</span>);</span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
 
 <p>下面给出他们的代码执行逻辑的区别图 :</p>
-<p><img src="images%5CFairAndNonFair.png" alt="公平锁和非公平锁的区别"></p>
+<p><img src="/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/FairAndNonFair.png" alt="公平锁和非公平锁的区别"></p>
 <p>公平锁的上锁是必须判断自己是不是需要排队；而非公平锁是直接进行CAS修改计数器看能不能加锁成功；如果加锁不成功则乖乖排队(调用acquire)；所以不管公平还是不公平；只要进到了AQS队列当中那么他就会排队；一朝排队；永远排队记住这点 </p>
 <h4 id="acquire方法方法源码分析（AQS-acquire-1-）"><a href="#acquire方法方法源码分析（AQS-acquire-1-）" class="headerlink" title="acquire方法方法源码分析（AQS#acquire(1)）"></a>acquire方法方法源码分析（AQS#acquire(1)）</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">acquire</span><span class="params">(<span class="keyword">int</span> arg)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//tryAcquire(arg)尝试加锁，如果加锁失败则会调用acquireQueued方法加入队列去排队，如果加锁成功则不会调用</span></span><br><span class="line">    <span class="comment">//acquireQueued方法下文会有解释</span></span><br><span class="line">    <span class="comment">//加入队列之后线程会立马park，等到解锁之后会被unpark，醒来之后判断自己是否被打断了；被打断下次分析</span></span><br><span class="line">    <span class="comment">//为什么需要执行这个方法？下文解释</span></span><br><span class="line">    <span class="keyword">if</span> (!tryAcquire(arg) &amp;&amp;</span><br><span class="line">        acquireQueued(addWaiter(Node.EXCLUSIVE), arg))</span><br><span class="line">        selfInterrupt();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -373,14 +298,14 @@
 <p>我们依次来分析一下：</p>
 <p><strong>当前节点是tail</strong></p>
 <p>这种情况很简单，因为tail是队列的最后一个节点，如果该节点需要取消，则直接把该节点的前继节点的next指向null，也就是把当前节点移除队列。出队的过程如下：</p>
-<p><img src="images%5CcancelCondition1.png" alt="tail"></p>
+<p><img src="/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/cancelCondition1.png" alt="tail"></p>
 <p>注意：经验证，这里并没有设置node的prev为null。 </p>
 <p><strong>当前节点不是head的后继节点，也不是tail</strong> </p>
-<p><img src="images%5CcancelCondition2.png" alt="center"></p>
+<p><img src="/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/cancelCondition2.png" alt="center"></p>
 <p>这里将node的前继节点的next指向了node的后继节点，真正执行的代码就是如下一行：</p>
 <p><code>compareAndSetNext(pred, predNext, next);</code></p>
 <p><strong>当前节点是head的后继节点</strong></p>
-<p><img src="images%5CcancelCondition3.png" alt="head"></p>
+<p><img src="/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/cancelCondition3.png" alt="head"></p>
 <p>这里直接unpark后继节点的线程，然后将next指向了自己。</p>
 <p>这里可能会有疑问，既然要删除节点，为什么都没有对prev进行操作，而仅仅是修改了next？</p>
 <p>要明确的一点是，这里修改指针的操作都是CAS操作，在AQS中所有以<code>compareAndSet</code>开头的方法都是尝试更新，并不保证成功，图中所示的都是执行成功的情况。</p>
@@ -413,6 +338,79 @@
 <p>到这里，通过ReentrantLock的lock和unlock分析已经基本完成了.</p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文从ReentrantLock出发，比较完整的分析了AQS内部独占锁的实现，总体来说实现的思路很清晰，就是使用了标志位+队列的方式来处理锁的状态，包括锁的获取，锁的竞争以及锁的释放。在AQS中，state可以表示锁的数量，也可以表示其他状态，state的含义由子类去定义，自己只是提供了对state的维护。AQS通过state来实现线程对资源的访问控制，而state具体的含义要在子类中定义。</p>
 <p>AQS在队列的维护上的实现比较复杂，尤其是节点取消时队列的维护，这里并不是通过一个线程来完成的。同时，AQS中大量的使用CAS来实现更新，这种更新能够保证状态和队列的完整性。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://wolflike.github.io/2021/05/13/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/%E5%9B%BE%E7%81%B5.jpg">
+      <meta itemprop="name" content="鸿曦">
+      <meta itemprop="description" content="没有什么知识是学不会的">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wolflike">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/05/13/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/" class="post-title-link" itemprop="url">synchronized关键字</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-05-13 12:09:57" itemprop="dateCreated datePublished" datetime="2021-05-13T12:09:57+08:00">2021-05-13</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">并发编程</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="1-synchronized是什么"><a href="#1-synchronized是什么" class="headerlink" title="1.synchronized是什么"></a>1.synchronized是什么</h3><p>​    synchronized关键字是sun公司为了解决线程同步问题而开发出来的。当线程来访问synchronized所包括的代码块时，要隐式获取锁，而后来的线程需要被阻塞。在jdk1.6之前，synchronized一直是以重量锁出现。所谓的重量锁是不管线程间对共享区是交替访问还是竞争访问，线程都是首先获取锁。而获取锁的行为就是调用操作系统函数的过程，在高并发的情况下，频繁调用操作系统函数，严重损耗性能。所以在<em>Doug Lea</em>大师写完优秀的并发编程包后，sun公司优化了synchronized关键字。在jdk1.6之后，synchronized有了无锁、偏向锁、轻量锁和重量锁的概念。</p>
+<h3 id="2-为什么要引入锁的多个状态"><a href="#2-为什么要引入锁的多个状态" class="headerlink" title="2.为什么要引入锁的多个状态"></a>2.为什么要引入锁的多个状态</h3><p>​    首次访问synchronized块的线程首先必须获取锁，然后才能执行synchronized块，而获取锁这个过程需要调用操作系统函数，这会导致cpu由用户态转变到内核态，而这个转变过程是很耗时间的。因此，可知获取synchronized锁的代价高。其次如果存在线程1还在访问synchronized块，而线程2此时也来访问synchronized块，这会导致线程之间存在竞争情况，这时synchronized会把线程2阻塞，而阻塞过程也是一个系统调用过程，这又会消耗不少时间。当然如果在高并发应用的情境中，时刻发生着线程之间的竞争，那么把synchronized直接设计为重量锁是没问题的。但是大部分情况下，线程之间是交替访问共享资源的。那么由此就可以产生一种设计思想：尽量不让程序调用系统函数。所以sun公司就设计了synchronized的无锁、偏向锁、轻量锁、重量锁使程序尽量不调用系统函数。</p>
+<h3 id="3-怎么实现synchronized关键字"><a href="#3-怎么实现synchronized关键字" class="headerlink" title="3.怎么实现synchronized关键字"></a>3.怎么实现synchronized关键字</h3><p>​    首先要明确synchronized使作用在对象上的，所以线程要获取所谓的锁就要向synchronized所代表的那个对象拿。我们都知道任何一个对象都可以当作锁，那我们是如何拿到“锁”的呢？其实对象都有三部分数据：对象头、对象属性以及对象补齐（一个对象所占的大小必须是8字节的倍数，所以有时候需要补充字节）。对象头就是用来实现synchronized锁的。</p>
+<p><img src="/2021/05/13/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/ObjectHeader.jpg" alt="对象头"></p>
+<p>上图是对象头的结构，随着锁的状态的变化，对象头的内容也会发生变化。最开始的状态是无锁状态标志位为01，但此时无锁状态是有两种状态：无锁可偏向和无锁不可偏向。也即是说还有一位偏向标志位。也就是说，初始状态有两种情况，可以为无锁可偏向或者无锁不可偏向。如果开启虚拟机参数-XX:+UseBiasedLocking=true,那默认是无锁可偏向的也就是101，如果关闭参数不启用偏向锁那就是001，然后调用对象的hashcode函数后，前25位会保存哈希码，那么状态就会变为001，如果调用了hashcode函数，那么锁状态是不可能到可偏向锁状态的，而是直接升为轻量锁000的。如果没有调用hashcode函数且开启了偏向锁参数，区访问synchronized块时，会到偏向锁状态101的，如果没有开启，那直接升级为轻量锁000。到了轻量锁的时候，如果存在竞争情况，那么就到重量锁010状态。设计四个状态的锁，第一个无锁状态是没有调用系统函数的，当然线程也没有访问synchronized块。第二可偏向锁状态作用就是用前25位来保存当前访问synchronized块的线程id，显然也没有调用系统函数。当线程访问完synchronized块后，没有其他线程访问，而其再次访问了，又可以直接进入synchronized块。当当前线程访问完后，有其他线程正好也来访问了，那就需要升级为轻量锁了，这就是所谓的交替访问（偏向锁撤销和升级轻量锁是需要消耗时间的，所以如果线程竞争情况激烈时，可以不用考虑偏向锁这一状态了，直接禁用掉）。偏向锁的撤销相对于调用系统函数来说消耗的时间就太少了，毕竟是在用户态下完成的。当然轻量锁形成后，线程执行完后要解锁的时候会把轻量锁000—-&gt;001,变成不可偏向无锁状态，这很合理。当其他线程需要访问的时候，需要用CAS指令判断是否是不可偏向无锁状态，如果是就把锁状态保存在当前线程的栈中，然后前25位指向栈中的地址，重新把状态置为000，如果发生竞争，那就直接升级重量锁010了，重量锁就要用到系统函数了，当线程2到达synchronized块时，如果线程1还没走，那么状态直接设为重量锁010，然后把调用系统函数阻塞线程2.等线程1走了之后，线程2重新锁上，它的状态也是重量级别的，当线程2走了之后，释放锁的时候，又会把状态置为001不可偏向锁，也即是说下一个线程访问的时候，又可以是轻量锁了。</p>
+<p>总结：无锁不需做任何事；偏向锁只需要判断状态和线程id号就可以了。当有别的线程访问synchronized块的时候，就需要撤销偏向锁这一状态了，也就是说mark word中再也不存在偏向锁的状态了。轻量锁加锁的时候只需要CAS修改mark word中前25位为指向栈中的指针，状态为改为000，解锁的时候把前25位置0，状态位改回001无锁不可偏向状态（但是永远不可能回到偏向锁了）。重量锁加锁的时候，把前25位置为指向互斥锁的指针，状态为改为010，解锁的时候，前25位置为0，状态改为001。</p>
+<p>总的来说synchronized的改进就是线程在加锁的时候会判断synchronized块是否有线程访问，如果有，调用系统函数阻塞之，如果没有，直接用CAS指令来改一下mark word就可以了（CAS是cpu指令，不耗时间），但是没线程访问的时候，锁的状态还是无锁状态的。只是在上述基础上，加了偏向锁，也即是说，如果synchronized块始终只有一个线程访问的话，那就没必要老是用CAS指令来修改mark word，而是直接标记这个线程就可以了，下次来直接访问。当然偏向锁一旦撤销那是不可逆的。想想也很合理，如果偏向锁撤销了，说明有多个线程访问synchronized块，那偏向标志位就改为0了，因为当前线程不知道后面访问synchronized块的线程还是不是自己，所以不能改为1了，何况偏向锁的撤销也是挺费性能的，不能老是撤销偏向锁。</p>
 
       
     </div>

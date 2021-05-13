@@ -23,23 +23,23 @@
   <meta name="description" content="1.是什么ReentrantLock是Doug Lea 大师写的一个同步线程的组件，也就是我们所谓的锁。这个对象主要是对用户开放两个方法：lock(),unlock()。也即是加锁和解锁。当然他也提供了Condition，在这里暂不做讨论。 2.为什么其实Doug Lea大师写的所有同步组件的本质思想是尽量不调用系统函数。因为调用系统函数对于高并发场景来说很浪费时间，能在用户态上解决同步问题尽量在">
 <meta property="og:type" content="article">
 <meta property="og:title" content="ReentrantLock源码分析">
-<meta property="og:url" content="http://wolflike.github.io/2021/05/12/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/index.html">
+<meta property="og:url" content="http://wolflike.github.io/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/index.html">
 <meta property="og:site_name" content="wolflike">
 <meta property="og:description" content="1.是什么ReentrantLock是Doug Lea 大师写的一个同步线程的组件，也就是我们所谓的锁。这个对象主要是对用户开放两个方法：lock(),unlock()。也即是加锁和解锁。当然他也提供了Condition，在这里暂不做讨论。 2.为什么其实Doug Lea大师写的所有同步组件的本质思想是尽量不调用系统函数。因为调用系统函数对于高并发场景来说很浪费时间，能在用户态上解决同步问题尽量在">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://wolflike.github.io/2021/05/12/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/images/SynchronizedQueue.png">
-<meta property="og:image" content="http://wolflike.github.io/2021/05/12/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/images%5CFairAndNonFair.png">
-<meta property="og:image" content="http://wolflike.github.io/2021/05/12/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/images%5CcancelCondition1.png">
-<meta property="og:image" content="http://wolflike.github.io/2021/05/12/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/images%5CcancelCondition2.png">
-<meta property="og:image" content="http://wolflike.github.io/2021/05/12/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/images%5CcancelCondition3.png">
-<meta property="article:published_time" content="2021-05-12T15:07:55.435Z">
-<meta property="article:modified_time" content="2021-05-12T15:07:50.000Z">
+<meta property="og:image" content="http://wolflike.github.io/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/SynchronizedQueue.png">
+<meta property="og:image" content="http://wolflike.github.io/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/FairAndNonFair.png">
+<meta property="og:image" content="http://wolflike.github.io/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/cancelCondition1.png">
+<meta property="og:image" content="http://wolflike.github.io/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/cancelCondition2.png">
+<meta property="og:image" content="http://wolflike.github.io/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/cancelCondition3.png">
+<meta property="article:published_time" content="2021-05-13T04:25:35.853Z">
+<meta property="article:modified_time" content="2021-05-13T04:25:35.833Z">
 <meta property="article:author" content="鸿曦">
 <meta property="article:tag" content="java并发">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://wolflike.github.io/2021/05/12/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/images/SynchronizedQueue.png">
+<meta name="twitter:image" content="http://wolflike.github.io/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/SynchronizedQueue.png">
 
-<link rel="canonical" href="http://wolflike.github.io/2021/05/12/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+<link rel="canonical" href="http://wolflike.github.io/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
 
 
 <script id="page-configurations">
@@ -173,7 +173,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://wolflike.github.io/2021/05/12/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+    <link itemprop="mainEntityOfPage" href="http://wolflike.github.io/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/%E5%9B%BE%E7%81%B5.jpg">
@@ -195,9 +195,8 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2021-05-12 23:07:55 / 修改时间：23:07:50" itemprop="dateCreated datePublished" datetime="2021-05-12T23:07:55+08:00">2021-05-12</time>
+              <time title="创建时间：2021-05-13 12:25:35" itemprop="dateCreated datePublished" datetime="2021-05-13T12:25:35+08:00">2021-05-13</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -238,7 +237,7 @@
 <h4 id="ReentrantLock源码分析之上锁过程"><a href="#ReentrantLock源码分析之上锁过程" class="headerlink" title="ReentrantLock源码分析之上锁过程"></a>ReentrantLock源码分析之上锁过程</h4><h4 id="AQS（AbstractQueuedSynchronizer）类的设计主要代码（具体参考源码）"><a href="#AQS（AbstractQueuedSynchronizer）类的设计主要代码（具体参考源码）" class="headerlink" title="AQS（AbstractQueuedSynchronizer）类的设计主要代码（具体参考源码）"></a>AQS（AbstractQueuedSynchronizer）类的设计主要代码（具体参考源码）</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">transient</span> <span class="keyword">volatile</span> Node head; <span class="comment">//队首</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">transient</span> <span class="keyword">volatile</span> Node tail;<span class="comment">//尾</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">int</span> state;<span class="comment">//锁状态，加锁成功则为1，重入+1 解锁则为0</span></span><br></pre></td></tr></table></figure>
 
 <p>AQS当中的队列示意图 :</p>
-<p><img src="images/SynchronizedQueue.png" alt="同步队列"></p>
+<p><img src="/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/SynchronizedQueue.png" alt="同步队列"></p>
 <h4 id="Node类的设计"><a href="#Node类的设计" class="headerlink" title="Node类的设计"></a>Node类的设计</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Node</span></span>&#123;</span><br><span class="line">    <span class="keyword">volatile</span> Node prev;</span><br><span class="line">    <span class="keyword">volatile</span> Node next;</span><br><span class="line">    <span class="keyword">volatile</span> Thread thread;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <h4 id="上锁过程重点"><a href="#上锁过程重点" class="headerlink" title="上锁过程重点"></a>上锁过程重点</h4><p>锁对象：其实就是ReentrantLock的实例对象，下文应用代码第一行中的lock对象就是所谓的锁<br>自由状态：自由状态表示锁对象没有被别的线程持有，计数器为0<br>计数器：再lock对象中有一个字段state用来记录上锁次数，比如lock对象是自由状态则state为0，如果大于零则表示被线程持有了，当然也有重入那么state则&gt;1<br>waitStatus：仅仅是一个状态而已；ws是一个过渡状态，在不同方法里面判断ws的状态做不同的处理，所以ws=0有其存在的必要性<br>tail：队列的队尾 head：队列的对首 ts：第二个给lock加锁的线程 tf：第一个给lock加锁的线程 tc：当前给线程加锁的线程<br>tl：最后一个加锁的线程 tn：随便某个线程<br>当然这些线程有可能重复，比如第一次加锁的时候tf=tc=tl=tn<br>节点：就是上面的Node类的对象，里面封装了线程，所以某种意义上node就等于一个线程</p>
@@ -247,7 +246,7 @@
 <h4 id="非公平锁的looc方法"><a href="#非公平锁的looc方法" class="headerlink" title="非公平锁的looc方法"></a>非公平锁的looc方法</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">final</span> <span class="keyword">void</span> <span class="title">lock</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (compareAndSetState(<span class="number">0</span>, <span class="number">1</span>))</span><br><span class="line">		setExclusiveOwnerThread(Thread.currentThread());</span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		 acquire(<span class="number">1</span>);</span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
 
 <p>下面给出他们的代码执行逻辑的区别图 :</p>
-<p><img src="images%5CFairAndNonFair.png" alt="公平锁和非公平锁的区别"></p>
+<p><img src="/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/FairAndNonFair.png" alt="公平锁和非公平锁的区别"></p>
 <p>公平锁的上锁是必须判断自己是不是需要排队；而非公平锁是直接进行CAS修改计数器看能不能加锁成功；如果加锁不成功则乖乖排队(调用acquire)；所以不管公平还是不公平；只要进到了AQS队列当中那么他就会排队；一朝排队；永远排队记住这点 </p>
 <h4 id="acquire方法方法源码分析（AQS-acquire-1-）"><a href="#acquire方法方法源码分析（AQS-acquire-1-）" class="headerlink" title="acquire方法方法源码分析（AQS#acquire(1)）"></a>acquire方法方法源码分析（AQS#acquire(1)）</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">acquire</span><span class="params">(<span class="keyword">int</span> arg)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//tryAcquire(arg)尝试加锁，如果加锁失败则会调用acquireQueued方法加入队列去排队，如果加锁成功则不会调用</span></span><br><span class="line">    <span class="comment">//acquireQueued方法下文会有解释</span></span><br><span class="line">    <span class="comment">//加入队列之后线程会立马park，等到解锁之后会被unpark，醒来之后判断自己是否被打断了；被打断下次分析</span></span><br><span class="line">    <span class="comment">//为什么需要执行这个方法？下文解释</span></span><br><span class="line">    <span class="keyword">if</span> (!tryAcquire(arg) &amp;&amp;</span><br><span class="line">        acquireQueued(addWaiter(Node.EXCLUSIVE), arg))</span><br><span class="line">        selfInterrupt();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -308,14 +307,14 @@
 <p>我们依次来分析一下：</p>
 <p><strong>当前节点是tail</strong></p>
 <p>这种情况很简单，因为tail是队列的最后一个节点，如果该节点需要取消，则直接把该节点的前继节点的next指向null，也就是把当前节点移除队列。出队的过程如下：</p>
-<p><img src="images%5CcancelCondition1.png" alt="tail"></p>
+<p><img src="/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/cancelCondition1.png" alt="tail"></p>
 <p>注意：经验证，这里并没有设置node的prev为null。 </p>
 <p><strong>当前节点不是head的后继节点，也不是tail</strong> </p>
-<p><img src="images%5CcancelCondition2.png" alt="center"></p>
+<p><img src="/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/cancelCondition2.png" alt="center"></p>
 <p>这里将node的前继节点的next指向了node的后继节点，真正执行的代码就是如下一行：</p>
 <p><code>compareAndSetNext(pred, predNext, next);</code></p>
 <p><strong>当前节点是head的后继节点</strong></p>
-<p><img src="images%5CcancelCondition3.png" alt="head"></p>
+<p><img src="/2021/05/13/ReentrantLock%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/cancelCondition3.png" alt="head"></p>
 <p>这里直接unpark后继节点的线程，然后将next指向了自己。</p>
 <p>这里可能会有疑问，既然要删除节点，为什么都没有对prev进行操作，而仅仅是修改了next？</p>
 <p>要明确的一点是，这里修改指针的操作都是CAS操作，在AQS中所有以<code>compareAndSet</code>开头的方法都是尝试更新，并不保证成功，图中所示的都是执行成功的情况。</p>
@@ -366,13 +365,10 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2021/05/12/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95%E6%80%BB%E7%BB%93/" rel="prev" title="数据结构与算法总结">
-      <i class="fa fa-chevron-left"></i> 数据结构与算法总结
+    <a href="/2021/05/13/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/" rel="prev" title="synchronized关键字">
+      <i class="fa fa-chevron-left"></i> synchronized关键字
     </a></div>
-      <div class="post-nav-item">
-    <a href="/2021/05/12/synchronized%E5%85%B3%E9%94%AE%E5%AD%97/" rel="next" title="synchronized关键字">
-      synchronized关键字 <i class="fa fa-chevron-right"></i>
-    </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
